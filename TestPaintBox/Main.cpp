@@ -1,8 +1,8 @@
 #include <windows.h>
 #include <gdiplus.h>
 
-#define CLASS_NAME	L"Test123"
-#define PB_CLASS_NAME L"PaintBox"
+#define CLASS_NAME		L"Test123"
+#define PB_CLASS_NAME	L"PaintBox"
 
 #define IDB_CHANGE		0x1000
 #define IDB_INVALIDATE	0x1001
