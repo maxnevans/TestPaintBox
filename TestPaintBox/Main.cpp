@@ -52,7 +52,7 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hInstancePrev,
 		0,
 		CLASS_NAME,
 		L"Hello world!",
-		WS_VISIBLE | WS_POPUP,
+		WS_VISIBLE | WS_POPUP | WS_THICKFRAME,
 		400, 200,
 		1280, 720,
 		NULL,
@@ -69,6 +69,8 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hInstancePrev,
 		return -1;
 	}
 
+	SetWindowLong(hWnd, GWL_EXSTYLE, GetWindowLong(hWnd, GWL_EXSTYLE) | WS_EX_LAYERED);
+	SetLayeredWindowAttributes(hWnd, RGB(255, 0, 0), 0, LWA_COLORKEY);
 
 	WNDCLASSEXW wpbClass = { 0 };
 	wpbClass.cbSize = sizeof(WNDCLASSEXW);
@@ -137,33 +139,14 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			break;
 		}
 		break;
-	case WM_LBUTTONUP:
-		mouseHold = FALSE;
-		break;
-	case WM_LBUTTONDOWN:
+	case WM_NCHITTEST:
+
 		x = GET_X_LPARAM(lParam);
 		y = GET_Y_LPARAM(lParam);
-		mouseHold = TRUE;
-		i++;
-		RECT rect;
-		rect.top = 0;
-		rect.left = 0;
-		rect.bottom = 100;
-		rect.right = 100;
-		InvalidateRect(hPaintBox, &rect, TRUE);
-		break;
-	case WM_MOUSEMOVE:
-		if (mouseHold) {
-			DWORD x_tr = GET_X_LPARAM(lParam) - x;
-			DWORD y_tr = GET_Y_LPARAM(lParam) - y;
-			x = GET_X_LPARAM(lParam);
-			y = GET_Y_LPARAM(lParam);
-			GetWindowRect(hWnd, &rectW);
-			MoveWindow(hWnd, rectW.left + x_tr, rectW.top + y_tr, 1280, 720, TRUE);
-		}
-		break;
-	case WM_MOUSELEAVE:
-		mouseHold = FALSE;
+
+		if ((x - 400) > 1280 || (y - 200) > 30) return HTBOTTOMRIGHT;
+
+		return HTCAPTION;
 		break;
 	case WM_CLOSE:
 		DestroyWindow(hWnd);
@@ -200,7 +183,7 @@ void OnPaintPaintBox(HDC hdc) {
 	using namespace Gdiplus;
 
 	wchar_t bufStr[256];
-	wsprintf(bufStr, L"%d", i);
+	wsprintf(bufStr, L"%d %d", x, y);
 	Font font(&FontFamily(L"Tahoma"), 12);
 	SolidBrush sb(Color(0xFF000000));
 
