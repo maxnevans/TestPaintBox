@@ -45,7 +45,7 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hInstancePrev,
 		CLASS_NAME,
 		L"Hello world!",
 		WS_VISIBLE | WS_OVERLAPPEDWINDOW,
-		0, 0,
+		400, 200,
 		1280, 720,
 		NULL,
 		NULL,
@@ -96,7 +96,7 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hInstancePrev,
 
 	MSG msg = { 0 };
 	
-	while (GetMessage(&msg, hWnd, 0, 0)) {
+	while (GetMessage(&msg, NULL, 0, 0)) {
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
@@ -149,7 +149,6 @@ LRESULT WINAPI PaintBoxProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 		OnPaintPaintBox(hdc);
 
 		EndPaint(hWnd, &ps);
-		return 0;
 		break;
 	default:
 		return DefWindowProc(hWnd, uMsg, wParam, lParam);
