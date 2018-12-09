@@ -1,11 +1,13 @@
 #include <windows.h>
 #include <gdiplus.h>
+#include <windowsx.h>
 
 #define CLASS_NAME		L"Test123"
 #define PB_CLASS_NAME	L"PaintBox"
 
 #define IDB_CHANGE		0x1000
 #define IDB_INVALIDATE	0x1001
+#define IDB_CLOSEWINDOW 0x1002
 
 LRESULT WINAPI WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 LRESULT WINAPI PaintBoxProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -16,6 +18,12 @@ void ChangePaintBox();
 HINSTANCE hInst;
 HWND hPaintBox;
 HWND hWnd;
+
+int mouseHold = FALSE;
+
+DWORD x;
+DWORD y;
+int i = 0;
 
 Gdiplus::Color clr(0xFF00FF00);
 
@@ -44,7 +52,7 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hInstancePrev,
 		0,
 		CLASS_NAME,
 		L"Hello world!",
-		WS_VISIBLE | WS_OVERLAPPEDWINDOW,
+		WS_VISIBLE | WS_POPUP,
 		400, 200,
 		1280, 720,
 		NULL,
@@ -108,13 +116,14 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hInstancePrev,
 LRESULT WINAPI WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	static DWORD err;
+	RECT rectW;
 
 	switch (uMsg) {
 	case WM_CREATE:
 		AddCtls(hWnd);
 		break;
 	case WM_COMMAND:
-		switch (wParam) {
+		switch (LOWORD(wParam)) {
 		case IDB_INVALIDATE:
 			MessageBox(hWnd, L"Invalidated!", L"Complete", MB_OK | MB_ICONINFORMATION);
 			InvalidateRect(hPaintBox, NULL, TRUE);
@@ -123,7 +132,38 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			MessageBox(hWnd, L"Paint box changed!", L"Complete", MB_OK | MB_ICONINFORMATION);
 			ChangePaintBox();
 			break;
+		case IDB_CLOSEWINDOW:
+			SendMessage(hWnd, WM_CLOSE, 0, 0);
+			break;
 		}
+		break;
+	case WM_LBUTTONUP:
+		mouseHold = FALSE;
+		break;
+	case WM_LBUTTONDOWN:
+		x = GET_X_LPARAM(lParam);
+		y = GET_Y_LPARAM(lParam);
+		mouseHold = TRUE;
+		i++;
+		RECT rect;
+		rect.top = 0;
+		rect.left = 0;
+		rect.bottom = 100;
+		rect.right = 100;
+		InvalidateRect(hPaintBox, &rect, TRUE);
+		break;
+	case WM_MOUSEMOVE:
+		if (mouseHold) {
+			DWORD x_tr = GET_X_LPARAM(lParam) - x;
+			DWORD y_tr = GET_Y_LPARAM(lParam) - y;
+			x = GET_X_LPARAM(lParam);
+			y = GET_Y_LPARAM(lParam);
+			GetWindowRect(hWnd, &rectW);
+			MoveWindow(hWnd, rectW.left + x_tr, rectW.top + y_tr, 1280, 720, TRUE);
+		}
+		break;
+	case WM_MOUSELEAVE:
+		mouseHold = FALSE;
 		break;
 	case WM_CLOSE:
 		DestroyWindow(hWnd);
@@ -158,9 +198,16 @@ LRESULT WINAPI PaintBoxProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 
 void OnPaintPaintBox(HDC hdc) {
 	using namespace Gdiplus;
+
+	wchar_t bufStr[256];
+	wsprintf(bufStr, L"%d", i);
+	Font font(&FontFamily(L"Tahoma"), 12);
+	SolidBrush sb(Color(0xFF000000));
+
 	Graphics graphics(hdc);
 	Pen      pen(clr);
 	graphics.DrawLine(&pen, 0, 0, 200, 100);
+	graphics.DrawString(bufStr, -1, &font, PointF( 0.f, 0.f ), &sb);
 }
 
 
@@ -185,6 +232,18 @@ void AddCtls(HWND hWnd) {
 		120, 30,
 		hWnd,
 		(HMENU)IDB_CHANGE,
+		hInst,
+		0
+	);
+
+	CreateWindow(
+		L"Button",
+		L"Close Window",
+		WS_CHILD | WS_VISIBLE,
+		320, 50,
+		120, 50,
+		hWnd,
+		(HMENU)IDB_CLOSEWINDOW,
 		hInst,
 		0
 	);
